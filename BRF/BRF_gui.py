@@ -101,7 +101,7 @@ class Window(QMainWindow):
 
     def update_plot(self):
         # parse user inputs
-        omega_vals = self.parse_list(self.omega_input.text())  # cluster-based list
+        omega_vals = self.parse_list(self.omega_input.text())  # cluster-based list 
         beta_vals = self.parse_list(self.beta_input.text())
         cluster_sizes = self.parse_list(self.cluster_sizes_input.text())
         # standard deviations

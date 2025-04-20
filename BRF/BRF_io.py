@@ -5,7 +5,7 @@ import numpy as np
 # TODO surrogate gradients for training 
 
 #### SOFT RESET AND REFRACTORY PERIOD MUST BE SCALED BY OMEGA SOMEHOW ????
-#### there must be a way to do this automatically and not trial and error...
+#### there must be a way to do this automatically and not trial and error... 
 
 # # must fidget with a bit to get desired spiking 
 # Q_DECAY = 0.95 
