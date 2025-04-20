@@ -10,10 +10,8 @@ import numpy as np
 
 from BRF_io import BRF_cell 
 
-
 THETA = 1.0
 DT = 0.01
-B_SCALE= 2.0
 
 class Window(QMainWindow):
     def __init__(self):
@@ -48,7 +46,7 @@ class Window(QMainWindow):
 
         self.cluster_sizes_input = QLineEdit("1, 1")
         self.gc_input = QLineEdit("0.1") 
-        self.q_decay_input = QLineEdit("0.95")
+        self.q_b_params = QLineEdit("0.95, 2.0")
 
         # omega
         layout.addWidget(QLabel("Mean omega values (comma separated):"))
@@ -66,9 +64,9 @@ class Window(QMainWindow):
         # gap conductance
         layout.addWidget(QLabel("Gap Conductance:"))
         layout.addWidget(self.gc_input)
-        # q decay 
-        layout.addWidget(QLabel("Adaptive threshold/refractory decay:"))
-        layout.addWidget(self.q_decay_input)
+        # q decay and effective beta scale
+        layout.addWidget(QLabel("Parameters. Q (refractory duration): | B (dampening strength):"))
+        layout.addWidget(self.q_b_params)
         # duration slider
         self.dur_slider = QSlider(Qt.Horizontal)
         self.dur_slider.setMinimum(1)      # 1 s
@@ -108,6 +106,9 @@ class Window(QMainWindow):
         omega_vals = self.parse_list(self.omega_input.text())  # cluster-based list 
         beta_vals = self.parse_list(self.beta_input.text())
         cluster_sizes = self.parse_list(self.cluster_sizes_input.text())
+        # q and b params
+        Q_PARAM, B_PARAM = self.parse_list(self.q_b_params.text())
+
         # standard deviations
         omega_std = float(self.omega_std.text())
         beta_std = float(self.beta_std.text())
@@ -136,8 +137,6 @@ class Window(QMainWindow):
         gc = float(self.gc_input.text())
         # adjacency matrix
         W = self.build_adjacency(num_cells)
-        # q decay
-        q_decay = float(self.q_decay_input.text())
 
         #####################
         ### INIT BRF CELLS ###
@@ -146,8 +145,8 @@ class Window(QMainWindow):
                     W, # adjacency matric for gap coupling
                     b_array, # beta values for simulation
                     omega_array, 
-                    q_decay=q_decay, # decay for refractory period / adaptive threshold / soft reset: q
-                    b_eff_scale=B_SCALE, # scale q by this so post spike dampening/soft reset is more effective
+                    q_decay=Q_PARAM, # decay for refractory period / adaptive threshold / soft reset: q
+                    b_eff_scale=B_PARAM, # scale q by this so post spike dampening/soft reset is more effective
                     # effective dampening VERY WEAK unless scaled, example: test 1.0
                     theta=THETA, # threshold 
                     gc=gc, # gap conductance
@@ -156,6 +155,7 @@ class Window(QMainWindow):
         ######################
         ### RUN SIMULATION ###
         ######################
+        # current injection
         time, u_array, v_array, q_array, x_array, z_array = IO_cells.run_simulation(
                                                                 dur=duration,
                                                                 I_start=0.0, 

@@ -1,18 +1,5 @@
 import torch
 import torch.nn as nn
-import numpy as np
-
-# TODO surrogate gradients for training 
-
-#### SOFT RESET AND REFRACTORY PERIOD MUST BE SCALED BY OMEGA SOMEHOW ????
-#### there must be a way to do this automatically and not trial and error... 
-
-# # must fidget with a bit to get desired spiking 
-# Q_DECAY = 0.95 
-# b_eff_scale = 2.0
-
-# THETA = 1.0
-# # DUR=10.0
 
 class BRF_cell(nn.Module):
     def __init__(
@@ -20,7 +7,7 @@ class BRF_cell(nn.Module):
             W, # adjacency matric for gap coupling
             b, # beta values for simulation
             omega, 
-            q_decay=0.95, # decay for refractory period / adaptive threshold / soft reset: q
+            q_decay=0.95, # decay for refractory period
             b_eff_scale=2.0, # scale q by this so post spike dampening/soft reset is more effective
             # effective dampening VERY WEAK unless scaled, example: test 1.0
             theta=1.0, # threshold 

@@ -1,17 +1,18 @@
 TODO: 
+add IO cells to microcircuit
 
 BRF_io: 
 divergence boundary?? tbh nah 
-sound: toggle spikes or oscillations or off
-surrogate gradient
+surrogate gradient to BRF cell 
 
-LATER NOT IMPORTANT
+LATER, NOT IMPORTANT
 spike train inputs - set % of random neurons to get input
 test different spike freq inputs? need a smart way to do systematically
 add distant dependent decay? 
 
 GUI:
 toggle on/off plotting adaptive threshold 
+sound: toggle spikes or oscillations or off
 
 
 TO THINK:
