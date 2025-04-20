@@ -12,7 +12,6 @@ from BRF_io import BRF_cell
 
 
 THETA = 1.0
-Q_DECAY = 0.95
 DT = 0.01
 B_SCALE= 2.0
 
@@ -48,6 +47,9 @@ class Window(QMainWindow):
         self.beta_std = QLineEdit("0")
 
         self.cluster_sizes_input = QLineEdit("1, 1")
+        self.gc_input = QLineEdit("0.1") 
+        self.q_decay_input = QLineEdit("0.95")
+
         # omega
         layout.addWidget(QLabel("Mean omega values (comma separated):"))
         layout.addWidget(self.omega_input)
@@ -62,9 +64,11 @@ class Window(QMainWindow):
         layout.addWidget(QLabel("Cluster sizes (comma separated):"))
         layout.addWidget(self.cluster_sizes_input)
         # gap conductance
-        self.gc_input = QLineEdit("0.1") 
         layout.addWidget(QLabel("Gap Conductance:"))
         layout.addWidget(self.gc_input)
+        # q decay 
+        layout.addWidget(QLabel("Adaptive threshold/refractory decay:"))
+        layout.addWidget(self.q_decay_input)
         # duration slider
         self.dur_slider = QSlider(Qt.Horizontal)
         self.dur_slider.setMinimum(1)      # 1 s
@@ -132,6 +136,8 @@ class Window(QMainWindow):
         gc = float(self.gc_input.text())
         # adjacency matrix
         W = self.build_adjacency(num_cells)
+        # q decay
+        q_decay = float(self.q_decay_input.text())
 
         #####################
         ### INIT BRF CELLS ###
@@ -140,7 +146,7 @@ class Window(QMainWindow):
                     W, # adjacency matric for gap coupling
                     b_array, # beta values for simulation
                     omega_array, 
-                    q_decay=Q_DECAY, # decay for refractory period / adaptive threshold / soft reset: q
+                    q_decay=q_decay, # decay for refractory period / adaptive threshold / soft reset: q
                     b_eff_scale=B_SCALE, # scale q by this so post spike dampening/soft reset is more effective
                     # effective dampening VERY WEAK unless scaled, example: test 1.0
                     theta=THETA, # threshold 
