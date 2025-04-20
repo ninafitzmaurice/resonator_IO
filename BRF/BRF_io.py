@@ -8,7 +8,7 @@ import numpy as np
 #### there must be a way to do this automatically and not trial and error...
 
 # # must fidget with a bit to get desired spiking 
-# Q_DECAY = 0.95
+# Q_DECAY = 0.95 
 # b_eff_scale = 2.0
 
 # THETA = 1.0
