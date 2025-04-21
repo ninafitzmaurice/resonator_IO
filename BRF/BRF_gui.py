@@ -13,6 +13,7 @@ from BRF_io import BRF_cell
 THETA = 1.0
 DT = 0.01
 
+
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()

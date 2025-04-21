@@ -49,6 +49,28 @@ class BRF_cell(nn.Module):
         q = self.q_decay * q + z
 
         return z, u_next, v, q
+    
+    # computes divergence boundary 
+    def sustain_osc(self):
+        arg = torch.clamp(1 - (self.dt * self.omega)**2, min=0.0)
+        return (-1 + torch.sqrt(arg)) / self.dt  
+        # return (-1 + torch.sqrt(1 - torch.square(self.dt * self.omega))) / self.dt
+    
+    ### Update function with divergence boubndary
+    def BRF_bounded_update(self, x, u, v, q):
+        p_omega = self.sustain_osc()
+
+        # DIVERGENCE BOUND & SOFT RESET
+        b_eff = p_omega - self.b - q
+
+        u_next = u + b_eff * u * self.dt - self.omega * v * self.dt + x * self.dt
+        v = v + self.omega * u * self.dt + b_eff * v * self.dt
+
+        z = ((u_next - self.theta - q) > 0).float()
+        # refractory period /adaptive threshold
+        q = self.q_decay * q + z
+
+        return z, u_next, v, q
 
     def run_simulation(
         self,
@@ -84,7 +106,8 @@ class BRF_cell(nn.Module):
             # all inputs 
             x_total = x_array[i] + I_gap
 
-            z, u, v, q = self.BRF_update(x_total, u, v, q)
+            # z, u, v, q = self.BRF_update(x_total, u, v, q)
+            z, u, v, q = self.BRF_bounded_update(x_total, u, v, q)
 
             z_array[:, i] = z
             u_array[:, i] = u
@@ -92,3 +115,5 @@ class BRF_cell(nn.Module):
             q_array[:, i] = q
 
         return time, u_array, v_array, q_array, x_array, z_array
+
+
