@@ -61,7 +61,12 @@ class BRF_cell(nn.Module):
         p_omega = self.sustain_osc()
 
         # DIVERGENCE BOUND & SOFT RESET
-        b_eff = p_omega - self.b - q
+        ### this causes b values to flip, I think
+        ### so negative is amplifying and positive is dampening
+        # b_eff = p_omega - self.b - q
+
+        ## b not flipped ?
+        b_eff = p_omega + self.b - q
 
         u_next = u + b_eff * u * self.dt - self.omega * v * self.dt + x * self.dt
         v = v + self.omega * u * self.dt + b_eff * v * self.dt

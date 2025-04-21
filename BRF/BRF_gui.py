@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout,
-    QWidget, QLineEdit, QSlider
+    QWidget, QLineEdit, QSlider, QCheckBox
 )
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
@@ -76,6 +76,11 @@ class Window(QMainWindow):
         self.dur_slider.valueChanged.connect(self.update_plot)
         layout.addWidget(QLabel("Duration (ms):"))
         layout.addWidget(self.dur_slider)
+        # show / hide refractory q
+        self.q_checkbox = QCheckBox("Show adaptive threshold / refractory period")
+        self.q_checkbox.setChecked(True) 
+        self.q_checkbox.stateChanged.connect(self.update_plot)
+        layout.addWidget(self.q_checkbox)
         # update button
         self.update_button = QPushButton("Update Plot")
         self.update_button.clicked.connect(self.update_plot)
@@ -103,6 +108,8 @@ class Window(QMainWindow):
         return W
 
     def update_plot(self):
+        # show q
+        show_q = self.q_checkbox.isChecked()
         # parse user inputs
         omega_vals = self.parse_list(self.omega_input.text())  # cluster-based list 
         beta_vals = self.parse_list(self.beta_input.text())
@@ -186,10 +193,11 @@ class Window(QMainWindow):
                 self.graphWidget.plot(time.numpy(), u_array[cell_i].numpy(), pen=pg.mkPen(clr))
                 
                 # adaptive threshold w refractory (dotted, on top)
-                self.graphWidget.plot(
-                    time.numpy(),
-                    q_array[cell_i].numpy()+THETA,            
-                    pen=pg.mkPen(clr, style=Qt.DotLine))
+                if show_q:
+                    self.graphWidget.plot(
+                        time.numpy(),
+                        q_array[cell_i].numpy()+THETA,            
+                        pen=pg.mkPen(clr, style=Qt.DotLine))
                 
                 # raster: times where z==1
                 spike_times = time[z_array[cell_i] > 0]
