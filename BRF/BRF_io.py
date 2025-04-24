@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+
+
 class BRF_cell(nn.Module):
     def __init__(
             self,
@@ -12,6 +14,7 @@ class BRF_cell(nn.Module):
             # effective dampening VERY WEAK unless scaled, example: test 1.0
             theta=1.0, # threshold 
             gc=0.1, # gap conductance
+            g_sparse=0.0,# sparsity of gap junctions
             dt=0.01
     ):
             super().__init__()
@@ -22,17 +25,23 @@ class BRF_cell(nn.Module):
             self.b_eff_scale = b_eff_scale
             self.theta = theta
             self.gc = gc
+            self.g_sparse = g_sparse
             self.dt = dt
 
     @staticmethod
-    def gap_junction(u, W, gc=0.1):
+    def gap_junction(u, W, gc=0.1, g_sparse=0.0):
         """
         u: (num_cells,) membrane potentials
         W: (num_cells, num_cells) adjacency matrix
         returns gap current for each cell using (u_i - u_j)
+
+        with sparsity
         """
         rowSum = torch.sum(W, dim=1)
-        return gc * (rowSum * u - torch.matmul(W, u))
+        mask = (torch.rand_like(rowSum)> g_sparse).float()
+        out = gc * (rowSum * u - torch.matmul(W, u))
+
+        return mask * out
 
     def BRF_update(self, x, u, v, q):
         '''
@@ -52,26 +61,26 @@ class BRF_cell(nn.Module):
     
     # computes divergence boundary 
     def sustain_osc(self):
-        arg = torch.clamp(1 - (self.dt * self.omega)**2, min=0.0)
-        return (-1 + torch.sqrt(arg)) / self.dt  
-        # return (-1 + torch.sqrt(1 - torch.square(self.dt * self.omega))) / self.dt
+        # arg = torch.clamp(1 - (self.dt * self.omega)**2, min=0.0)
+        # return (-1 + torch.sqrt(arg)) / self.dt  
+        return (-1 + torch.sqrt(1 - torch.square(self.dt * self.omega))) / self.dt
     
     ### Update function with divergence boubndary
     def BRF_bounded_update(self, x, u, v, q):
         p_omega = self.sustain_osc()
 
         # DIVERGENCE BOUND & SOFT RESET
-        ### this causes b values to flip, I think
-        ### so negative is amplifying and positive is dampening
-        # b_eff = p_omega - self.b - q
+        b_eff = p_omega - self.b - q
+        # here I add b so the sign stays the same (using b in gui not b_offset to avoid extra inputs)
+        # b_eff = p_omega - q + self.b 
 
-        ## b not flipped ?
-        b_eff = p_omega + self.b - q
+        # u_next = u + b_eff * u * self.dt - self.omega * v * self.dt + x * self.dt
+        # v = v + self.omega * u * self.dt + b_eff * v * self.dt
 
-        u_next = u + b_eff * u * self.dt - self.omega * v * self.dt + x * self.dt
-        v = v + self.omega * u * self.dt + b_eff * v * self.dt
+        u_next = u + self.dt*(u * b_eff - v * self.omega + x)
+        v = v + self.dt*(u * self.omega + v * b_eff)
 
-        z = ((u_next - self.theta - q) > 0).float()
+        z = ((u_next - self.theta - q) > 0)
         # refractory period /adaptive threshold
         q = self.q_decay * q + z
 
@@ -107,7 +116,7 @@ class BRF_cell(nn.Module):
         ### simulation
         for i in range(steps):
             # calculate gap currents
-            I_gap = self.gap_junction(u, self.W, self.gc)
+            I_gap = self.gap_junction(u, self.W, self.gc, self.g_sparse)
             # all inputs 
             x_total = x_array[i] + I_gap
 
