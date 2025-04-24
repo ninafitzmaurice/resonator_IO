@@ -1,0 +1,9 @@
+
+
+TO DO
+
+1. find params that match IO clusters and test if they diverge
+2. too many oscillators connected = divergence, so, what to do? 
+        - add sparcity to gap currents? 
+2. get jax loop running 
+3. 
